@@ -1,32 +1,28 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-// Import OpenZeppelin libraries
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/security/Pausable.sol";
 
-library DecimalMath {
-    function mul(uint256 a, uint256 b, uint256 scale) internal pure returns (uint256) {
-        return (a * b) / scale;
-    }
-}
-
 contract EcoCoin is ERC20, Ownable, Pausable {
-    using DecimalMath for uint256;
+
+    // === EcoCoin Tokenomics ===
+    // 1 ECO token represents 10 trees planted (~0.25 tons CO₂/year)
+
+    uint256 public constant TOTAL_TREES = 400_000_000;
+    uint256 public constant TREES_PER_ECO = 10;
+    uint256 public constant CO2_PER_TREE = 0.025 * 1e18;
+    uint256 public constant CO2_PER_ECO = TREES_PER_ECO * CO2_PER_TREE;
+    uint256 public constant MAX_SUPPLY = (TOTAL_TREES / TREES_PER_ECO) * 1e18;
+
+    uint256 public stakingRewardRate = 10; // 10% annual reward
+    uint256 public totalStaked;
 
     struct Staking {
         uint256 amount;
         uint256 stakingTime;
     }
-
-    uint256 public constant TOTAL_TREES = 400000000; // 400 million trees
-uint256 public constant CO2_PER_TREE = 25 * 1e15; // 0.025 * 1e18
-uint256 public constant TOTAL_CO2 = TOTAL_TREES * CO2_PER_TREE;
-
-    uint256 public stakingRewardRate = 10; // 10% annual reward
-    uint256 public totalStaked;
-
 
     mapping(address => Staking) public stakedBalance;
     mapping(address => uint256) public carbonCredits;
@@ -40,14 +36,14 @@ uint256 public constant TOTAL_CO2 = TOTAL_TREES * CO2_PER_TREE;
     constructor() ERC20("EcoCoin", "ECO") {}
 
     function mint(address to, uint256 amount) public onlyOwner {
-        require(totalSupply() + amount <= TOTAL_CO2, "Exceeds total CO2 capacity");
+        require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds total ECO cap based on tree logic");
         _mint(to, amount);
         emit Minted(to, amount);
     }
 
     function mintWithCarbonCredit(address to, uint256 amount, uint256 carbonCreditAmount) public onlyOwner {
         require(carbonCreditAmount >= amount, "Insufficient carbon credits");
-        require(totalSupply() + amount <= TOTAL_CO2, "Exceeds total CO2 capacity");
+        require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds total ECO cap");
         _mint(to, amount);
         carbonCredits[to] += carbonCreditAmount;
         emit Minted(to, amount);
@@ -64,14 +60,9 @@ uint256 public constant TOTAL_CO2 = TOTAL_TREES * CO2_PER_TREE;
         require(balanceOf(msg.sender) >= amount, "Insufficient balance");
 
         _transfer(msg.sender, address(this), amount);
-
-        Staking storage s = stakedBalance[msg.sender];
-        if (s.amount == 0) {
-            s.stakingTime = block.timestamp;
-        }
-        s.amount += amount;
+        stakedBalance[msg.sender].amount += amount;
+        stakedBalance[msg.sender].stakingTime = block.timestamp;
         totalStaked += amount;
-
         emit Staked(msg.sender, amount);
     }
 
@@ -80,7 +71,6 @@ uint256 public constant TOTAL_CO2 = TOTAL_TREES * CO2_PER_TREE;
 
         uint256 stakingDuration = block.timestamp - stakedBalance[msg.sender].stakingTime;
         uint256 reward = (amount * stakingRewardRate * stakingDuration) / (365 days * 100);
-        require(totalSupply() + reward <= TOTAL_CO2, "Reward exceeds CO2 cap");
 
         _mint(msg.sender, reward);
         _transfer(address(this), msg.sender, amount);
@@ -106,5 +96,17 @@ uint256 public constant TOTAL_CO2 = TOTAL_TREES * CO2_PER_TREE;
     function transfer(address recipient, uint256 amount) public override whenNotPaused returns (bool) {
         require(amount > 0, "Amount must be greater than 0");
         return super.transfer(recipient, amount);
+    }
+
+    function ecoImpact() public pure returns (string memory) {
+        return "1 ECO = 10 trees planted (~0.25 tons CO2/year)";
+    }
+
+    function co2PerEco() public pure returns (uint256) {
+        return CO2_PER_ECO;
+    }
+
+    function treesPerEco() public pure returns (uint256) {
+        return TREES_PER_ECO;
     }
 }
