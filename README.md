@@ -1,13 +1,23 @@
-# Sample Hardhat Project
+# 🌱 EcoCoin – A Carbon-Backed Cryptocurrency for Environmental Protection
 
-This project demonstrates a basic Hardhat use case. It comes with a sample contract, a test for that contract, and a Hardhat Ignition module that deploys that contract.
+**EcoCoin** is a blockchain-based solution to incentivize forest protection and carbon sequestration through decentralized finance. Developed as part of a 400-million tree plantation program, EcoCoin transforms verified carbon sequestration into tokenized assets.
 
-Try running some of the following tasks:
+---
 
-```shell
-npx hardhat help
-npx hardhat test
-REPORT_GAS=true npx hardhat test
-npx hardhat node
-npx hardhat ignition deploy ./ignition/modules/Lock.js
-```
+## 💡 Key Features
+
+- 🪙 **ERC20 Token**: EcoCoin follows the ERC20 standard, mintable and manageable by the contract owner.
+- 🌳 **Carbon-Backed Utility**: Each token represents a stake in carbon captured through large-scale poplar plantations.
+- 🧑‍🤝‍🧑 **Community Incentives**: Designed to engage local communities in forest care and preservation.
+- 🔄 **DeFi Compatible**: Ready for staking, reward logic, and integration with DEXs like Uniswap.
+
+---
+
+## 🔧 How to Use
+
+### 🧪 Local Development
+
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/YasirKamal1980/EcoCoin.git
+   cd EcoCoin
