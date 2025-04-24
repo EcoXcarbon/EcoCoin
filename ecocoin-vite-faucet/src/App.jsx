@@ -1,79 +1,104 @@
-import { useState } from 'react';
-import { ethers } from 'ethers';
-
-const contractAddress = "0x9A676e781A523b5d0C0e43731313A708CB607508";
-const abi = [
-  "function mint(address to, uint256 amount) public"
-];
+// src/App.jsx
+import React, { useState } from "react";
+import Faucet from "./components/Faucet";
+import Staking from "./components/Staking";
+import AssetSubmission from "./components/AssetSubmission";
+import CarbonRegistry from "./components/CarbonRegistry";
+import favicon from "./assets/eco-favicon.png";
 
 function App() {
-  const [wallet, setWallet] = useState(null);
-  const [status, setStatus] = useState("");
+  const [activeTab, setActiveTab] = useState(null);
+  const [score, setScore] = useState(78);
+  const [rank, setRank] = useState(12);
 
-  const connectWallet = async () => {
-    if (!window.ethereum) {
-      alert("MetaMask not detected.");
-      return;
-    }
-
-    const provider = new ethers.BrowserProvider(window.ethereum);
-    const accounts = await provider.send("eth_requestAccounts", []);
-    const signer = await provider.getSigner();
-    const address = await signer.getAddress();
-    setWallet(address);
-    setStatus("✅ Wallet connected");
-  };
-
-  const mintTokens = async () => {
-    if (!wallet) {
-      alert("Connect your wallet first.");
-      return;
-    }
-
-    try {
-      setStatus("⏳ Sending transaction...");
-
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
-      const eco = new ethers.Contract(contractAddress, abi, signer);
-      const amount = ethers.parseUnits("50", 18);
-
-      const tx = await eco.mint(wallet, amount);
-      await tx.wait();
-
-      setStatus(`✅ Sent 50 ECO to ${wallet}`);
-    } catch (err) {
-      console.error(err);
-      setStatus("❌ Transaction failed.");
-    }
-  };
+  const EcoScoreHeader = () => (
+    activeTab === "quiz" && (
+      <div style={{
+        marginBottom: 20,
+        padding: "10px 20px",
+        background: "#f0f9f3",
+        border: "1px solid #cfe9dc",
+        borderRadius: 8
+      }}>
+        <h3 style={{ margin: 0, color: "#2f5d3f" }}>
+          🌿 Your Eco Impact Score: <span style={{ color: "#1d4d2e" }}>{score}</span>
+        </h3>
+        <p style={{ margin: "4px 0 0 0", fontSize: 14 }}>
+          You’re ranked <strong>#{rank}</strong> among quiz users. Final reward to be calculated after 60 days.
+        </p>
+      </div>
+    )
+  );
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-red-500 text-white text-3xl">
-      <div className="bg-white shadow-xl rounded-2xl p-10 w-full max-w-md text-center">
-        <h1 className="text-3xl font-bold text-green-700 mb-4">🌱 EcoCoin Faucet</h1>
-        <p className="text-gray-600 mb-6">Claim 50 test ECO tokens to your MetaMask wallet.</p>
-
-        {!wallet ? (
-          <button
-            onClick={connectWallet}
-            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-xl w-full mb-4"
-          >
-            🔗 Connect Wallet
-          </button>
-        ) : (
-          <div className="text-sm text-gray-800 mb-4">Connected: {wallet}</div>
-        )}
-
-        <button
-          onClick={mintTokens}
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-xl w-full"
-        >
-          💧 Claim 50 ECO
-        </button>
-
-        {status && <p className="text-sm text-gray-600 mt-4">{status}</p>}
+    <div style={{
+      fontFamily: "sans-serif",
+      minHeight: "100vh",
+      backgroundColor: "#f6f9f6",
+      padding: 24
+    }}>
+      {/* Header */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        marginBottom: 24
+      }}>
+        <img src={favicon} alt="EcoCoin Logo" style={{ height: 36, marginRight: 12 }} />
+        <h1 style={{ margin: 0, fontSize: 28, color: "#2f5d3f" }}>EcoCoin Dashboard</h1>
       </div>
+
+      {/* Tabs */}
+      <div style={{
+        display: "flex",
+        justifyContent: "center",
+        gap: 12,
+        marginBottom: 32
+      }}>
+        {[
+          { key: "quiz", label: "Quiz" },
+          { key: "staking", label: "Staking" },
+          { key: "submit", label: "Submit Data" },
+          { key: "registry", label: "Carbon Registry" }
+        ].map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            style={{
+              padding: "10px 20px",
+              borderRadius: 8,
+              border: activeTab === tab.key ? "2px solid #2f5d3f" : "1px solid #ccc",
+              backgroundColor: activeTab === tab.key ? "#e6f4ea" : "#fff",
+              color: "#2f5d3f",
+              fontWeight: activeTab === tab.key ? "bold" : "normal",
+              cursor: "pointer",
+              transition: "all 0.2s ease-in-out",
+              boxShadow: activeTab === tab.key ? "0 0 4px rgba(0,0,0,0.1)" : "none"
+            }}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Content */}
+      {activeTab && (
+        <div style={{
+          maxWidth: 860,
+          margin: "0 auto",
+          padding: "24px 32px",
+          backgroundColor: "#ffffff",
+          borderRadius: 12,
+          boxShadow: "0 0 12px rgba(0,0,0,0.05)",
+          textAlign: "left"
+        }}>
+          <EcoScoreHeader />
+          {activeTab === "quiz" && <Faucet setScore={setScore} setRank={setRank} />}
+          {activeTab === "staking" && <Staking />}
+          {activeTab === "submit" && <AssetSubmission />}
+          {activeTab === "registry" && <CarbonRegistry isAdmin={true} />}
+        </div>
+      )}
     </div>
   );
 }
